@@ -21,6 +21,7 @@ def handle_comparison(file: pd.DataFrame, col_target, analysis_type, component, 
     for column in col_target:
         file = clean_data(file=file, file_basename=None, component=component, column=column, threshold_limit=threshold)
         calculate_mann_whitney_u_test(df=file, column=column)
+        calculate_z_test(df=file, column=column)
         plotter = Plotter(file)
         if analysis_type == "Line Chart":
             fig = plotter.plotly_compare_line_chart(column)
@@ -60,5 +61,25 @@ def calculate_mann_whitney_u_test(df, column):
     else:
         st.write("There is no significant difference between the two groups.")
 
-
-
+def calculate_z_test(df, column):
+    #TODO: Unmock this
+    data1 = df[df['fleet'] == '785C'][column]
+    data2 = df[df['fleet'] == '793F'][column]
+    
+    mean1 = data1.mean()
+    mean2 = data2.mean()
+    std1 = data1.std()
+    std2 = data2.std()
+    n1 = len(data1)
+    n2 = len(data2)
+    
+    z_score = (mean1 - mean2) / ((std1**2/n1 + std2**2/n2)**0.5)
+    
+    st.subheader(f'{column.capitalize()} - Z-Test Results')
+    st.write(f'Z-Score: {z_score}')
+    
+    critical_value = 1.96  # For a two-tailed test with alpha=0.05
+    if abs(z_score) > critical_value:
+        st.write("There are significant differences between the two groups.")
+    else:
+        st.write("There is no significant difference between the two groups.")

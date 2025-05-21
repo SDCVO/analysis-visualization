@@ -1,85 +1,100 @@
 # plotting_utils.py
 
 import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+
 
 class Plotter:
     def __init__(self, data):
         self.data = data
 
-    def plot_temporal_analysis(self, columns, analysis_level="Entire Fleet"):
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
+    def plotly_line_chart(self, column: str, analysis_level="Entire Fleet"):
         if analysis_level == "Entire Fleet":
-                ax.plot(
-                    self.data['sample_dt'],
-                    self.data[columns],
-                    label=columns,
-                    marker='o',
-                    linestyle='-'
-                )
+            fig = px.line(
+                data_frame=self.data,
+                x='sample_dt',
+                y=column,
+                labels={'x': 'Sample Date', 'y': column.capitalize()},
+                title=f'Time Series Analysis of {column.capitalize()} Over Time'
+            )
         else:
-            unique_equip_numbers = self.data["equip_number"].unique()
-            for equip_number in unique_equip_numbers:
-                subset_data = self.data[self.data["equip_number"] == equip_number].sort_values(by='sample_dt')
-
-                ax.plot(
-                    subset_data['sample_dt'],
-                    subset_data[columns],
-                    label=f'{columns} - equip_number: {equip_number}',
-                    marker='o',
-                    linestyle='-'
-                )
-        # Adjust x-axis properties
-        ax.set_xlim(min(self.data['sample_dt']), max(self.data['sample_dt']))
-        ax.set_xticks(range(0, len(self.data['sample_dt']), 10))  # Adjust the step as needed
+            fig = px.line(
+                data_frame=self.data,
+                x='sample_dt',
+                y=column,
+                color='equip_number',
+                labels={'x': 'Sample Date', 'y': column.capitalize()},
+                title=f'Time Series Analysis of {column.capitalize()} Over Time'
+            )
+            
         
-        
-        plt.title(f'Temporal Analysis of {columns.capitalize()} Across All Equipment')
-        plt.xlabel('Sample Date')
-        plt.ylabel('Values')
-        plt.legend()
         return fig
 
-    def plot_histogram(self, column, analysis_level="Entire Fleet"):
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
+    def plotly_histogram(self, column: str, analysis_level="Entire Fleet"):
         if analysis_level == "Entire Fleet":
-            self.data[column].hist(bins=20, alpha=0.5, label='Entire Fleet', ax=ax)
+            fig = px.histogram(
+                data_frame=self.data, 
+                x=column, 
+                nbins=30,
+                title=f'Histogram of {column.capitalize()} Across All Equipment',
+            )
         else:
-            for equip_number, group in self.data.groupby('equip_number'):
-                group[column].hist(bins=20, alpha=0.5, label=f'equip_number: {equip_number}', ax=ax)
-        plt.title(f'Histogram of {column.capitalize()} Across All Equipment')
-        plt.xlabel(column)
-        plt.ylabel('Frequency')
-        plt.legend()
+            fig = px.histogram(
+                data_frame=self.data, 
+                x=column, 
+                nbins=30,
+                color='equip_number',
+                title=f'Histogram of {column.capitalize()} Across All Equipment',
+            )
         return fig
 
-    def plot_boxplot(self, column, analysis_level="Entire Fleet"):
-        fig, ax = plt.subplots(figsize=(10, 6))
-
+    def plotly_boxplot(self, column: str, analysis_level="Entire Fleet"):
         if analysis_level == "Entire Fleet":
-            sns.boxplot(y=column, data=self.data, ax=ax)
-
-            # Calculate Q3 and Q1
-            q1 = self.data[column].quantile(0.25)
-            q3 = self.data[column].quantile(0.75)
-            iqr = q3 - q1
-
-            # Find outliers
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-
-            # Annotate Q3-Q1 and outliers
-            ax.text(0.95, 0.95, f'IQR: {iqr:.2f}', transform=ax.transAxes, ha='right', va='top')
-            ax.text(0.95, 0.90, f'Lower Bound: {lower_bound:.2f}', transform=ax.transAxes, ha='right', va='top')
-            ax.text(0.95, 0.85, f'Upper Bound: {upper_bound:.2f}', transform=ax.transAxes, ha='right', va='top')
-
+            fig = px.box(
+                data_frame=self.data, 
+                y=column, 
+                orientation='v',
+                title=f'Boxplot of {column.capitalize()} Across All Equipment',
+            )
         else:
-            sns.boxplot(x='equip_number', y=column, data=self.data, ax=ax)
-
-        plt.title(f'Boxplot of {column.capitalize()} Across All Equipment')
-        plt.xlabel('Equip Number')
-        plt.ylabel(column.capitalize())
+            fig = px.box(
+                data_frame=self.data,
+                y=column, 
+                x='equip_number', 
+                orientation='v',
+                color='equip_number',
+                title=f'Boxplot of {column.capitalize()} Across All Equipment',
+            )        
         return fig
 
+    def plotly_compare_line_chart(self, column: str):
+        fig = px.line(
+            data_frame=self.data,
+            x='sample_dt',
+            y=column,
+            color='fleet',
+            labels={'x': 'Sample Date', 'y': column.capitalize()},
+            title=f'Time Series Analysis of {column.capitalize()} Over Time'
+        )
+        return fig
+    
+    def plotly_compare_histogram(self, column: str):
+        fig = px.histogram(
+            data_frame=self.data, 
+            x=column, 
+            nbins=30,
+            color='fleet',
+            title=f'Histogram of {column.capitalize()} Across All Equipment',
+        )
+        return fig
+    
+    def plotly_compare_boxplot(self, column: str):
+        fig = px.box(
+            data_frame=self.data,
+            y=column,
+            x='fleet',  
+            orientation='v',
+            color='fleet',
+            title=f'Boxplot of {column.capitalize()} Across All Equipment',
+        )        
+        return fig

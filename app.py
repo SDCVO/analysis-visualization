@@ -1,5 +1,4 @@
 # app.py
-
 import streamlit as st
 import pandas as pd
 import util
@@ -37,24 +36,29 @@ if file_1 or file_2:
     tab_file_1, tab_file_2, tab_comparison = st.tabs([f"{file_1_basename}", f"{file_2_basename}", "Comparison"])
     
     with tab_file_1:
-        #TODO: Generalize this
-        analysis_type = st.segmented_control("Select analysis type", options=['Line Chart', "Histogram", "Boxplot"], default="Line Chart")
-        analysis_level = st.radio("Select analysis level", options=["Entire Fleet", "By Equipment"], horizontal=True)
-        component = st.selectbox("Select a component", options=file_1['comp_desc'].drop_duplicates() if 'comp_desc' in file_1.columns else [])
-        file = file_1[file_1['comp_desc'] == component]
-        file = file.sort_values(by='sample_dt', ascending=False)
-        util.handle_tab(file = file, col_target=col_target, analysis_type=analysis_type, analysis_level=analysis_level, component=component)
+        #TODO: Generalize both tabs to consume from the same routine
+        analysis_type = st.segmented_control("Select analysis type", options=['Line Chart', "Histogram", "Boxplot"], default="Line Chart", key="tab1_analysis_type")
+        analysis_level = st.radio("Select analysis level", options=["Entire Fleet", "By Equipment"], horizontal=True, key="tab1_analysis_level")
+        component = st.selectbox("Select a component", options=file_1['comp_desc'].drop_duplicates() if 'comp_desc' in file_1.columns else [], key="tab1_selectbox_component")
+        file = file_1[file_1['comp_desc'] == component].sort_values(by=['sample_dt'])        
+        slider = st.slider('Select a threshold limit', min_value=0.5, max_value=1.0, value=0.95, step=0.05, key="tab1_slider_threshold")
+        util.handle_tab(file = file, file_basename=file_1_basename, col_target=col_target, analysis_type=analysis_type, analysis_level=analysis_level, component=component, threshold=slider)
+
 
     with tab_file_2:
-        #TODO: Generalize this
-        analysis_type = st.segmented_control("Select analysis type", options=['Line Chart', "Histogram", "Boxplot"], default="Line Chart", key='unique_dadas')
-        analysis_level = st.radio("Select analysis level", options=["Entire Fleet", "By Equipment"], horizontal=True, key='unique_radio')
-        component = st.selectbox("Select a component", options=file_2['comp_desc'].drop_duplicates() if 'comp_desc' in file_2.columns else [], key='unique_select')
-        file = file_2[file_2['comp_desc'] == component]
-        file = file.sort_values(by='sample_dt', ascending=False)
-        util.handle_tab(file = file, col_target=col_target, analysis_type=analysis_type, analysis_level=analysis_level, component=component)
+        #TODO: Generalize both tabs to consume from the same routine
+        analysis_type = st.segmented_control("Select analysis type", options=['Line Chart', "Histogram", "Boxplot"], default="Line Chart", key="tab2_analysis_type")
+        analysis_level = st.radio("Select analysis level", options=["Entire Fleet", "By Equipment"], horizontal=True, key="tab2_analysis_level")
+        component = st.selectbox("Select a component", options=file_2['comp_desc'].drop_duplicates() if 'comp_desc' in file_2.columns else [], key="tab2_selectbox_component")
+        file = file_2[file_2['comp_desc'] == component].sort_values(by=['sample_dt'])        
+        slider = st.slider('Select a threshold limit', min_value=0.5, max_value=1.0, value=0.95, step=0.05, key="tab2_slider_threshold")
+        util.handle_tab(file = file, file_basename=file_2_basename, col_target=col_target, analysis_type=analysis_type, analysis_level=analysis_level, component=component, threshold=slider)
 
     with tab_comparison:
-        #TODO: Create comparissons
-        pass
-        
+        #TODO: Generalize this
+        analysis_type = st.segmented_control("Select analysis type", options=['Line Chart', "Histogram", "Boxplot"], default="Line Chart", key="tab3_analysis_type")
+        component = st.selectbox("Select a component", options=file_1['comp_desc'].drop_duplicates() if 'comp_desc' in file_1.columns else [], key="tab3_selectbox_component")
+        file = pd.concat([file_1, file_2], ignore_index=True)
+        file = file[file['comp_desc'] == component].sort_values(by=['sample_dt'])
+        slider = st.slider('Select a threshold limit', min_value=0.5, max_value=1.0, value=0.95, step=0.05, key="tab3_slider_threshold")
+        util.handle_comparison(file = file, col_target=col_target, analysis_type=analysis_type, component=component, threshold=slider)

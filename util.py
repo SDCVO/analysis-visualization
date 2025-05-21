@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 from plotting_utils import Plotter
+from scipy.stats import mannwhitneyu
 
 def handle_tab(file: pd.DataFrame, file_basename, col_target, analysis_type, analysis_level, component, threshold=None):
     for column in col_target:
@@ -19,6 +20,7 @@ def handle_tab(file: pd.DataFrame, file_basename, col_target, analysis_type, ana
 def handle_comparison(file: pd.DataFrame, col_target, analysis_type, component, threshold=None):
     for column in col_target:
         file = clean_data(file=file, file_basename=None, component=component, column=column, threshold_limit=threshold)
+        calculate_mann_whitney_u_test(df=file, column=column)
         plotter = Plotter(file)
         if analysis_type == "Line Chart":
             fig = plotter.plotly_compare_line_chart(column)
@@ -43,3 +45,20 @@ def clean_data(file: pd.DataFrame, file_basename, component, column, threshold_l
     _file_stats = _file[column].describe()
     st.dataframe(_file_stats)
     return _file
+
+def calculate_mann_whitney_u_test(df, column):
+    #TODO: Unmock this
+    data1 = df[df['fleet'] == '785C'][column]
+    data2 = df[df['fleet'] == '793F'][column]
+    stat, p = mannwhitneyu(data1, data2, alternative='two-sided')
+    
+    st.subheader(f'{column.capitalize()} - Mann-Whitney U Test Results')
+    st.write(f'Statistic: {stat}, p-value: {p}')
+    
+    if p < 0.05:
+        st.write("There are significant differences between the two groups.")
+    else:
+        st.write("There is no significant difference between the two groups.")
+
+
+
